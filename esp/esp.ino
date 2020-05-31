@@ -112,6 +112,8 @@ void loop() {
         
         Serial.println("Envio Concluído");
         webSocketClient.sendData((String)timer);
+
+        //captureStatus = "stop";
         webSocketClient.getData(captureStatus);
       }
     }

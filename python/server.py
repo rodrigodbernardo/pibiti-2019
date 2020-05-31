@@ -1,17 +1,16 @@
-import asyncio
-import websockets
-from datetime import datetime
-import time
-import subprocess
-import socket
+import asyncio#
+import websockets#
+from datetime import datetime#
+import time#
+#import subprocess
+import socket#
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
-import glob
-import os
-import json
-from itertools import count
-from matplotlib.animation import FuncAnimation
+import glob#
+import os#
+#from itertools import count
+#from matplotlib.animation import FuncAnimation
 
 #Pacotes para windows
 if os.name == 'nt':
@@ -20,25 +19,16 @@ if os.name == 'nt':
 #Pacotes para linux/MacOs
 #else:
 #    import sys
-#    import termios
+#    import termio
 #    import atexit
 #    from select import select
 
 clear = lambda: os.system('cls')
 menu = "0"
-capt_remaining = 0
-capt_code = ""
-x = []
-y1 = []
-y2 = []
-y3 = []
-y4 = []
 
-indc = count()
+x = []
 
 async def clientConnected(websocket, path):
-    #response = ''
-
     clear()
 
     print('Conexão bem sucedida!')
@@ -89,19 +79,15 @@ async def clientConnected(websocket, path):
             now = datetime.now()
             current_time = now.strftime(("%Y%m%d_%H-%M-%S"))
             
-            #if(len(timeOfCapture) < 4):
             timeOfCapture = ("{:04d}".format(int(timeOfCapture)))
-
-            #os.chdir(r'C:\Users\rodri\Documents\pibiti-2019\python\capture')
-            file = open("./capture/{}_{}_A{:04d}_C{:03d}_{}ms.txt".format(captureCode,current_time,numberOfSamples,iteration+1,timeOfCapture),"w")
+            file = open("./python/capture/{}_{}_A{:04d}_C{:03d}_{}ms.txt".format(captureCode,current_time,numberOfSamples,iteration+1,timeOfCapture),"w")
 
             for i in range(numberOfSamples):
                 if (i == 0):
                     file.write("AcX,AcY,AcZ,GyX,GyY,GyZ,Tmp\n")
 
                 dado = await websocket.recv()
-                file.write("{}".format(dado))
-                file.write("\n")
+                file.write("{}\n".format(dado))
 
             file.close()
 
@@ -109,11 +95,59 @@ async def clientConnected(websocket, path):
             print('Tempo de download: {} ms.'.format(timeOfDownload))
             print('Captura {} concluída.\n'.format(iteration+1))
 
-
         await websocket.send('stop')
-        print('Processo concluído.')
-            
+        print('Processo concluído. Preparando para plotar dados...')
 
+        for capturePath in glob.glob('./python/capture/*.txt'):
+            #if os.path.exists(capturePath):
+            #    continue
+            
+            with open(capturePath) as csv_file:
+
+                capturePath = capturePath.replace('capture','image').replace('.txt','.png')
+                if os.path.exists(capturePath):
+                    continue
+
+                csv_reader = csv.reader(csv_file, delimiter = ',')
+                line_count = 0
+
+                d = {'acelerometro-x':[],'acelerometro-y':[],'acelerometro-z':[],'giroscopio-x':[],'giroscopio-y':[],'giroscopio-z':[]}#,'tmp':[]}
+                x = np.arange(2500)
+
+                plt.figure()
+
+                for line in csv_reader:
+
+                    if line_count == 0:     #ignora a primeira linha (cabeçalho)
+                        line_count += 1
+                        continue
+
+                    index = 0
+
+                    for axis in d:
+                        d[axis].append(int(line[index]))
+                        index += 1
+
+                    line_count += 1
+
+                index = 1
+
+                for axis in d:
+                    plt.subplot(3,2,index)
+                    plt.plot(x,d[axis])
+                    plt.ylim(-32768,32767)
+                    plt.xlim(0,cap)
+                    plt.title(axis)
+                    index += 1
+
+                print('Salvando imagem em {}.'.format(capturePath))
+                plt.savefig('{}'.format(capturePath),dpi = 200)
+
+        print('Processo finalizado.')
+
+
+        
+            
     elif(mainMenu == '2'):
         print("Preparando análise. Pressione 'ESC' para sair.")
         while True:
@@ -156,27 +190,27 @@ print("****PIBITI-2019****")
 mainMenu = input("""
 ***MENU PRINCIPAL***
 
-1-CONECTAR AO SENSOR
-2-PLOTAR DADOS CAPTURADOS
-3-UTILIZAÇÃO DO SOFTWARE
-4-SAIR
+1-Conectar ao sensor
+2-Plotar dados
+3-Manual
+4-Sair
 
 >>> """)
 
 clear()
 
 if(mainMenu == '1'):
-    print("1-CONECTAR AO SENSOR")
-    print("CRIANDO SERVIDOR EM: {}:{}".format(myip,port))
+    print("1-Conectar ao sensor")
+    print("Criando servidor em: {}:{}".format(myip,port))
     w_server = websockets.serve(clientConnected, myip, port)
 
-    print("\nAGUARDANDO COMUNICAÇÃO WEBSOCKET...")
+    print("\nAguardando conexão...")
     asyncio.get_event_loop().run_until_complete(w_server)
     asyncio.get_event_loop().run_forever()
 
 elif(mainMenu == '2'):
     
-    print('2-PLOTAR DADOS CAPTURADOS')
+    print('2-Plotar dados')
     
     error = 1
     while(error):
@@ -226,8 +260,6 @@ elif(mainMenu == '2'):
             #plt.ylim(-15000,15000)
             #plt.xlim(0,cap)
             #plt.title('Eixo X - Acelerômetro')
-
-            
 
             if not(os.path.isdir("./python_server/image/{}".format(folder))):
                 os.mkdir("./python_server/image/{}".format(folder))

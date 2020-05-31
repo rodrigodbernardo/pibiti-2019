@@ -8,6 +8,6 @@ const char* otaPass = "pibiti2019";
 char* hostLapisco = "10.110.2.92";//"10.110.2.120";
 char* hostLari = "10.106.1.10";//"10.2.8.57";
 char* hostRedmi = "";
-char* hostCasa = "192.168.0.109";
+char* hostCasa = "192.168.1.103";
 
 const int port_WS = 80;
