@@ -4,7 +4,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoOTA.h>
 #include <Wire.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 #include "private_keys.h"
 //#include "function.h"
 
@@ -36,8 +36,9 @@ unsigned long prevMillis = 0;
 
 String menu = "";
 String output;
-String captureStatus = "stop";
+//String captureStatus = "stop";
 String numberOfSamples = "";
+String numberOfCaptures = "";
 
 char *host;
 
@@ -46,7 +47,7 @@ boolean led_state = 0;
 WiFiClient client;
 ESP8266WiFiMulti wifiMulti;
 WebSocketClient webSocketClient;
-StaticJsonDocument<200> jsonData;
+//StaticJsonDocument<200> jsonData;
 
 void setup() {
   Serial.begin(500000);
@@ -59,74 +60,75 @@ void setup() {
 
 void loop() {
   handshakeTest();
-  
-  for(int tentativa = 0; client.connected() && tentativa < 25 && menu == "";tentativa++){ //25 tentativas de conexao
-    delay(1000);
-    
-    //Serial.println("\nServidor encontrado. Aguardando comandos.");
-    Serial.printf("%d tentativas de 25.\n\n",tentativa+1);
+
+  menu = "";
+  for (int tentativa = 0; client.connected() && tentativa < 25 && menu == ""; tentativa++) { //25 tentativas de conexao
     webSocketClient.getData(menu);
-
-    if (menu == "1") {
-      //webSocketClient.getData(output);  //Somente um olá do servidor
-
-      //delay(5000);
-      numberOfSamples = "";
-      for (int tentativa = 0; client.connected() && numberOfSamples == "" && tentativa < 25;tentativa++) {
-        webSocketClient.getData(numberOfSamples);
-        Serial.printf("%d tentativas de 25.\n",tentativa+1);
-        delay(1000);
-      }
-
-      if(numberOfSamples == "")
-        break;
-
-      //Serial.println("hey2");
-      int _numberOfSamples = numberOfSamples.toInt();
-      //webSocketClient.sendData("Pronto");
-
-      delay(100);
-      webSocketClient.getData(captureStatus);
-      while (captureStatus == "continue") {
-        Serial.println("\nCaptura iniciada.");
-        timer = millis();                                                                     //Contador de tempo de captura
-        for (int i = 0; i < _numberOfSamples; i++)                                                //LE O SENSOR E ARMAZENA SEUS DADOS EM acel[][], giro[][] E temp[][]
-        {
-          sensorRead();
-          for (int j = 0; j < 3; j++)
-          {
-            acel[i][j] = buff[j];
-            giro[i][j] = buff[j + 4];
-          }
-          temp[i] = buff[3];
-        }
-        timer = millis() - timer;
-
-        webSocketClient.sendData((String)timer);
-        //Serial.printf("Tempo de captura = %i ms\n", timer);
-        Serial.println("Enviando dados. Aguarde...");
-
-        delay(100);                                                                         //Delay para o servidor python nao se atrasar (nunca se sabe)
-        sendSensorData(_numberOfSamples);
-        delay(100);
-        
-        Serial.println("Envio Concluído");
-        webSocketClient.sendData((String)timer);
-
-        //captureStatus = "stop";
-        webSocketClient.getData(captureStatus);
-      }
-    }
-    else if (menu == "2") {
-      delay(2000);  // tempo para o servidor python se preparar para o envio de dados.
-      sendLiveData();
-    }
-    else if (menu == "3")
-      ESP.restart();
-      
-    menu = "";
+    Serial.printf("%d tentativas de 25.\n\n", tentativa + 1);
+    delay(1000);
   }
-  //Serial.println("HEY");
+
+  if(menu == "")
+    return;
+
+  if (menu == "1") {
+
+    numberOfSamples = "";
+    for (int tentativa = 0; client.connected() && tentativa < 25 && numberOfSamples == ""; tentativa++) {
+      webSocketClient.getData(numberOfSamples);
+      webSocketClient.getData(numberOfCaptures);
+      Serial.printf("%d tentativas de 25.\n", tentativa + 1);
+      delay(1000);
+    }
+
+    if (numberOfSamples == "")
+      return;
+
+    int _numberOfSamples = numberOfSamples.toInt();
+    int _numberOfCaptures = numberOfCaptures.toInt();
+    
+    delay(100);
+    //webSocketClient.getData(captureStatus);
+    //while (captureStatus == "continue") {
+    for(int iteration = 0; iteration < _numberOfCaptures; iteration++){
+      Serial.printf("\nCaptura %d iniciada.\n", iteration);
+      timer = millis();                                                                     //Contador de tempo de captura
+      for (int i = 0; i < _numberOfSamples; i++)                                                //LE O SENSOR E ARMAZENA SEUS DADOS EM acel[][], giro[][] E temp[][]
+      {
+        sensorRead();
+        for (int j = 0; j < 3; j++)
+        {
+          acel[i][j] = buff[j];
+          giro[i][j] = buff[j + 4];
+        }
+        temp[i] = buff[3];
+      }
+      timer = millis() - timer;
+
+      webSocketClient.sendData((String)timer);
+      //Serial.printf("Tempo de captura = %i ms\n", timer);
+      Serial.println("Enviando dados. Aguarde...");
+
+      delay(100);                                                                         //Delay para o servidor python nao se atrasar (nunca se sabe)
+      sendSensorData(_numberOfSamples);
+      delay(100);
+
+      Serial.println("Envio Concluído");
+      webSocketClient.sendData((String)timer);
+
+      //captureStatus = "stop";
+      //webSocketClient.getData(captureStatus);
+    }
+  }
+  else if (menu == "2") {
+    delay(2000);  // tempo para o servidor python se preparar para o envio de dados.
+    sendLiveData();
+  }
+  else if (menu == "3")
+    ESP.restart();
+
+  menu = "";
+
 }
 void wifiStart() {
   wifiMulti.addAP("IFCE-LARI", passLari);
@@ -135,7 +137,7 @@ void wifiStart() {
   wifiMulti.addAP("FLAVIO_02", passCasa);
 
   WiFi.mode(WIFI_STA);
-  
+
   while (wifiMulti.run() != WL_CONNECTED)
   {
     delay(100);
@@ -205,9 +207,15 @@ void sensorRead() {
 void sendLiveData() {
   while (client.connected())
   {
-    output = "";
+    output = "[\t";
     sensorRead();
 
+    for(int i = 0; i < 7; i++){
+      output += buff[i];
+      output += "\t";
+    }
+    output+= "]";
+    /*
     jsonData["acx"] = buff[0];
     jsonData["acy"] = buff[1];
     jsonData["acz"] = buff[2];
@@ -219,12 +227,13 @@ void sendLiveData() {
     jsonData["gyz"] = buff[6];
 
     serializeJson(jsonData, output);
+    */
     Serial.println(output);
     webSocketClient.sendData(output);
 
     delay(100);
   }
-  handshakeTest();
+  //handshakeTest();
 }
 void sendSensorData(int numberOfSamples) {
   timer = millis();
@@ -248,16 +257,16 @@ void sendSensorData(int numberOfSamples) {
 }
 int handshakeTest() {
   led_state = !led_state;
-  
-  if (!client.connect(host, port_WS)){
+
+  if (!client.connect(host, port_WS)) {
     Serial.println("\nIncapaz de encontrar o servidor.");
     return 0;
   }
-  
+
   webSocketClient.path = "/";
   webSocketClient.host = host;
 
-  if (!webSocketClient.handshake(client)){
+  if (!webSocketClient.handshake(client)) {
     return 0;
   }
   return 1;

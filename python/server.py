@@ -59,12 +59,15 @@ async def clientConnected(websocket, path):
             print('O cliente parou de responder. Reiniciando o servidor.')
             return
 
+        await websocket.send(numberOfCaptures)
+
         numberOfCaptures = int(numberOfCaptures)
         numberOfSamples = int(numberOfSamples)
 
         print('Iniciando captura. Não desligue o sistema.')
+
         for iteration in range (numberOfCaptures):
-            await websocket.send('continue')
+            #await websocket.send('continue')
 
             print('Captura {} iniciada.'.format(iteration+1))
 
@@ -95,7 +98,7 @@ async def clientConnected(websocket, path):
             print('Tempo de download: {} ms.'.format(timeOfDownload))
             print('Captura {} concluída.\n'.format(iteration+1))
 
-        await websocket.send('stop')
+        #await websocket.send('stop')
         print('Processo concluído. Preparando para plotar dados...')
 
         for capturePath in glob.glob('./python/capture/*.txt'):
@@ -144,9 +147,7 @@ async def clientConnected(websocket, path):
                 plt.savefig('{}'.format(capturePath),dpi = 200)
 
         print('Processo finalizado.')
-
-
-        
+    
             
     elif(mainMenu == '2'):
         print("Preparando análise. Pressione 'ESC' para sair.")
@@ -159,7 +160,8 @@ async def clientConnected(websocket, path):
                     break
     
     elif mainMenu == '3':
-        return
+        pass
+        #return
         
         
 def get_ip():
