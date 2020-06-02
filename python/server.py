@@ -115,7 +115,10 @@ async def clientConnected(websocket, path):
                 line_count = 0
 
                 d = {'acelerometro-x':[],'acelerometro-y':[],'acelerometro-z':[],'giroscopio-x':[],'giroscopio-y':[],'giroscopio-z':[]}#,'tmp':[]}
-                x = np.arange(2500)
+                
+                numberOfSamples = int(capturePath[-20:-16])
+                #numberOfSamples = len(d['acelerometro-x'])
+                x = np.arange(numberOfSamples)
 
                 plt.figure()
 
@@ -139,7 +142,7 @@ async def clientConnected(websocket, path):
                     plt.subplot(3,2,index)
                     plt.plot(x,d[axis])
                     plt.ylim(-32768,32767)
-                    plt.xlim(0,cap)
+                    plt.xlim(0,numberOfSamples)
                     plt.title(axis)
                     index += 1
 
