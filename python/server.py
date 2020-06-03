@@ -45,7 +45,7 @@ async def clientConnected(websocket, path):
         print('O cliente parou de responder. Reiniciando o servidor.')
         return
 
-    clear()
+    #clear()
     if(mainMenu == '1'):
         print('1-captura\n')
 
@@ -112,29 +112,26 @@ async def clientConnected(websocket, path):
                     continue
 
                 csv_reader = csv.reader(csv_file, delimiter = ',')
-                line_count = 0
 
+
+
+                string='''
                 d = {'acelerometro-x':[],'acelerometro-y':[],'acelerometro-z':[],'giroscopio-x':[],'giroscopio-y':[],'giroscopio-z':[]}#,'tmp':[]}
                 
                 numberOfSamples = int(capturePath[-20:-16])
                 #numberOfSamples = len(d['acelerometro-x'])
                 x = np.arange(numberOfSamples)
 
+                
                 plt.figure()
 
+                next(csv_reader)
                 for line in csv_reader:
-
-                    if line_count == 0:     #ignora a primeira linha (cabeçalho)
-                        line_count += 1
-                        continue
-
                     index = 0
-
                     for axis in d:
                         d[axis].append(int(line[index]))
                         index += 1
 
-                    line_count += 1
 
                 index = 1
 
@@ -145,12 +142,31 @@ async def clientConnected(websocket, path):
                     plt.xlim(0,numberOfSamples)
                     plt.title(axis)
                     index += 1
+                '''
+                line_count = 0 #Zera a contagem de linhas a cada arquivo lido.
+                
+                y = [[[],[]] , [[],[]] , [[],[]]]   #antes, usei dict com um vetor para cada eixo.
+                
+                next(csv_reader)
+                for line in csv_reader:
+                    index = 0
+                    for rows in range (3):
+                        for cols in range (2):
+                            y[rows][cols].append(line[index])
+                            index += 1
+
+                x = np.arange(len(y[0][0]))
+
+                fig, plots = plt.subplots(nrows=3,ncols=2,sharex=True)
+
+                for rows in range(3):
+                    for cols in range (2):
+                        plots[rows,cols].plot(x,y[rows][cols])
 
                 print('Salvando imagem em {}.'.format(capturePath))
                 plt.savefig('{}'.format(capturePath),dpi = 200)
 
         print('Processo finalizado.')
-    
             
     elif(mainMenu == '2'):
         print("Preparando análise. Pressione 'ESC' para sair.")
@@ -234,42 +250,65 @@ elif(mainMenu == '2'):
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0 #Zera a contagem de linhas a cada arquivo lido.
 
-            d={'acelerometro-x':[],'acelerometro-y':[],'acelerometro-z':[],'giroscopio-x':[],'giroscopio-y':[],'giroscopio-z':[]}#,'tmp':[]}
-            x = np.arange(2500)
+            #d={'acelerometro-x':[],'acelerometro-y':[],'acelerometro-z':[],'giroscopio-x':[],'giroscopio-y':[],'giroscopio-z':[]}#,'tmp':[]}
             
-            plt.figure()
+            y = [[[],[]] , [[],[]] , [[],[]]]
+            #x = np.arange(2500)
+            
+            #plt.figure()
+
+            #fig.subplots_adjust(hspace=0.4, wspace=0.4)
             #plt.suptitle("{}".format(path),fontsize=12)
             #nome = input('Digite o nome: ')
+
             #plt.suptitle("Eixo X - Giroscópio - {} Hz".format(nome),fontsize=12)
 
+            #for line in csv_reader:
+            #    if line_count !=0:  #ignora a primeira linha do arquivo(cabeçalho)
+            #        index = 0
+            #        for axis in d:
+            #            d[axis].append(int(line[index]))
+            #            index += 1
+            #    line_count += 1
+
+            index = 0
+
+            next(csv_reader)
             for line in csv_reader:
-                #ESTE PROGRAMA SIMPLESMENTE IGNORA A PRIMEIRA LINHA DO ARQUIVO .TXT. NUMA FUTURA VERSAO PODE-SE UTILIZAR
-                #OS DADOS DELA PARA IDENTIFICAR OS EIXOS NA DICT 'd'
-                if line_count !=0:
-                    index = 0
-                    for axis in d:
-                        d[axis].append(int(line[index]))
+                for rows in range (3):
+                    for cols in range (2):
+                        y[rows][cols].append(line[index])
                         index += 1
-                line_count += 1
 
-            index = 1
-            for axis in d:
-                plt.subplot(3,2,index)
-                plt.plot(x,d[axis])
-                plt.ylim(-32768,32767)
-                plt.xlim(0,cap)
-                plt.title(axis)
-                index += 1
+            x = np.arange(len(y[0][0]))
+            #y = np.zeros((3,2), dtype=int)
 
-            #plt.plot(x,d['gyx'])
-            #plt.ylim(-15000,15000)
-            #plt.xlim(0,cap)
-            #plt.title('Eixo X - Acelerômetro')
+            fig, plots = plt.subplots(nrows=3,ncols=2)
+            fig.suptitle = 'captura'
+            fig.ylim(-32768,32767)
+
+            for rows in range(3):
+                for cols in range (2):
+                    plots[rows,cols].plot(x,y[rows][cols])
+
+            #index = 1
+            #for axis in d:
+            #    plt.subplot(2,3,index)
+            #    plt.plot(x,d[axis])
+            #    plt.ylim(-32768,32767)
+            #    plt.xlim(0,cap)
+            #    plt.title(axis)
+            #    index += 1
+
+            #for i in range(6):
+
+            
 
             if not(os.path.isdir("./python_server/image/{}".format(folder))):
                 os.mkdir("./python_server/image/{}".format(folder))
             print("SALVANDO PLOT '{}.png'".format(path))
-            plt.tight_layout()
+            
+            #plt.subplots_adjust(left=0.125, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=5)
             plt.savefig("./python_server/image/{}/{}.png".format(folder,path), dpi = 600)
     
     print("PRONTO. VERIFIQUE A PASTA 'image' PARA VISUALIZAR")

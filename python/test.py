@@ -1,5 +1,12 @@
-string = 'e_20200531_11-50-47_A0250_C001_0058ms.txt'
+a = [[[],[]],[[],[]],[[],[]]]
 
-string = string[-20:-16]
+b = [0,1,2,3,4,5]
 
-print(string)
+for k in range (5):
+    index = 0
+    for i in range (3):
+        for j in range(2):
+            a[i][j].append(b[index])
+            index+=1
+
+print (a)
