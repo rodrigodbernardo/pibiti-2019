@@ -88,6 +88,8 @@ async def clientConnected(websocket, path):
         #   FUTURO: separar o salvamento do arquivo da aquisição de dados, para deixar o processo mais rápido
         print('Processo concluído. Preparando para plotar dados...')
 
+        #   Procura todos os arquivos .txt na pasta das capturas para realizar a plotagem.
+        #   FUTURO: trocar isso por guardar os dados das capturas numa lista e só entao plotar e gravar ao mesmo tempo
         for capturePath in glob.glob('./python/capture/*.txt'):            
             with open(capturePath) as csv_file:
                 capturePath = capturePath.replace('capture','image').replace('.txt','.png')
@@ -96,11 +98,16 @@ async def clientConnected(websocket, path):
 
                 csv_reader = csv.reader(csv_file, delimiter = ',')
 
+                
                 #   opção: utilizar dicionario
-                #   y = {acx:[],acy:[],acz:[],gyx:[],gyy:[],gyz:[]}                
-                y = [[[],[]] , [[],[]] , [[],[]]]  
-
-                next(csv_reader)
+                #   y = {acx:[],acy:[],acz:[],gyx:[],gyy:[],gyz:[]}
+                #   ** não utilizei dicionários aqui por que seus elementos não têm indexação                
+                y = [[[],[]] , [[],[]] , [[],[]]]   # y é uma matriz 3x2 onde cada elemento é um vetor que guardará os dados das capturas.
+                #axis = (('Acelerômetro - X','Acelerômetro - Y'),('Acelerômetro - Z','Giroscópio - X'),('Giroscópio - Y','Giroscópio - Z'))
+                
+                #   Lê linha a linha do arquivo e salva em y.
+                #
+                next(csv_reader)    #pula a primeira linha (cabeçalho)
                 for line in csv_reader:
                     index = 0
                     for rows in range (3):
@@ -111,9 +118,20 @@ async def clientConnected(websocket, path):
                 x = np.arange(len(y[0][0]))
                 fig, plots = plt.subplots(nrows=3,ncols=2,sharex=True)
 
+                #   Percorre y plotando os dados do eixo correspondente
+                #
                 for rows in range(3):
                     for cols in range (2):
                         plots[rows,cols].plot(x,y[rows][cols])
+                        #plots[rows,cols].set_title(axis[rows][cols])
+
+                
+                plots[0,0].set_title('Acelerômetro - X')
+                plots[0,1].set_title('Acelerômetro - Y')
+                plots[1,0].set_title('Acelerômetro - Z')
+                plots[1,1].set_title('Giroscópio - X')
+                plots[2,0].set_title('Giroscópio - Y')
+                plots[2,1].set_title('Giroscópio - Z')
 
                 print('Salvando imagem em {}.'.format(capturePath))
                 plt.savefig('{}'.format(capturePath),dpi = 200)
