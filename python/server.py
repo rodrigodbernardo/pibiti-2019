@@ -84,6 +84,8 @@ async def clientConnected(websocket, path):
             print('Tempo de download: {} ms.'.format(timeOfDownload))
             print('Captura {} concluída.\n'.format(iteration+1))
 
+        #   separei o plot da aquisição de dados para passar o menor tempo possível capturando os dados;
+        #   FUTURO: separar o salvamento do arquivo da aquisição de dados, para deixar o processo mais rápido
         print('Processo concluído. Preparando para plotar dados...')
 
         for capturePath in glob.glob('./python/capture/*.txt'):            
@@ -92,7 +94,10 @@ async def clientConnected(websocket, path):
                 if os.path.exists(capturePath):
                     continue
 
-                csv_reader = csv.reader(csv_file, delimiter = ',')                
+                csv_reader = csv.reader(csv_file, delimiter = ',')
+
+                #   opção: utilizar dicionario
+                #   y = {acx:[],acy:[],acz:[],gyx:[],gyy:[],gyz:[]}                
                 y = [[[],[]] , [[],[]] , [[],[]]]  
 
                 next(csv_reader)
