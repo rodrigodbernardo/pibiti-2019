@@ -67,8 +67,10 @@ async def clientConnected(websocket, path):
 
             now = datetime.now()
             current_time = now.strftime(("%Y%m%d_%H-%M-%S"))
-            
             timeOfCapture = ("{:04d}".format(int(timeOfCapture)))
+
+            # Abre um arquivo no modo escrita para salvar os dados.
+
             file = open("./python/capture/{}_{}_A{:04d}_C{:03d}_{}ms.txt".format(captureCode,current_time,numberOfSamples,iteration+1,timeOfCapture),"w")
 
             for i in range(numberOfSamples):
@@ -90,7 +92,20 @@ async def clientConnected(websocket, path):
 
         #   Procura todos os arquivos .txt na pasta das capturas para realizar a plotagem.
         #   FUTURO: trocar isso por guardar os dados das capturas numa lista e só entao plotar e gravar ao mesmo tempo
-        for capturePath in glob.glob('./python/capture/*.txt'):            
+        for capturePath in glob.glob('./python/capture/*.txt'):         
+ 
+            # Abre o arquivo csv para ler os dados
+            # Futuro: trocar o pacote csv pela leitura de arquivos nativa de python
+            #
+            # file = open(filePath,'r')
+            # data = file.read()
+            # rows = data.split('\n')
+            # full_data = []
+            # 
+            # for row in rows:
+            #   split_row = row.split(',')
+            #   full_data.append(split_row)
+
             with open(capturePath) as csv_file:
                 capturePath = capturePath.replace('capture','image').replace('.txt','.png')
                 if os.path.exists(capturePath):
@@ -102,11 +117,12 @@ async def clientConnected(websocket, path):
                 #   opção: utilizar dicionario
                 #   y = {acx:[],acy:[],acz:[],gyx:[],gyy:[],gyz:[]}
                 #   ** não utilizei dicionários aqui por que seus elementos não têm indexação                
-                y = [[[],[]] , [[],[]] , [[],[]]]   # y é uma matriz 3x2 onde cada elemento é um vetor que guardará os dados das capturas.
+                y = [[[],[]] , [[],[]] , [[],[]]]
+                   
                 #axis = (('Acelerômetro - X','Acelerômetro - Y'),('Acelerômetro - Z','Giroscópio - X'),('Giroscópio - Y','Giroscópio - Z'))
                 
                 #   Lê linha a linha do arquivo e salva em y.
-                #
+
                 next(csv_reader)    #pula a primeira linha (cabeçalho)
                 for line in csv_reader:
                     index = 0
@@ -119,12 +135,11 @@ async def clientConnected(websocket, path):
                 fig, plots = plt.subplots(nrows=3,ncols=2,sharex=True)
 
                 #   Percorre y plotando os dados do eixo correspondente
-                #
+
                 for rows in range(3):
                     for cols in range (2):
                         plots[rows,cols].plot(x,y[rows][cols])
                         #plots[rows,cols].set_title(axis[rows][cols])
-
                 
                 plots[0,0].set_title('Acelerômetro - X')
                 plots[0,1].set_title('Acelerômetro - Y')
