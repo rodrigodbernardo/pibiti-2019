@@ -116,9 +116,9 @@ async def clientConnected(websocket, path):
                 
                 #   opção: utilizar dicionario
                 #   y = {acx:[],acy:[],acz:[],gyx:[],gyy:[],gyz:[]}
-                #   ** não utilizei dicionários aqui por que seus elementos não têm indexação                
+                #   ** não utilizei dicionários aqui por que seus elementos não têm indexação com números               
                 y = [[[],[]] , [[],[]] , [[],[]]]
-                   
+
                 #axis = (('Acelerômetro - X','Acelerômetro - Y'),('Acelerômetro - Z','Giroscópio - X'),('Giroscópio - Y','Giroscópio - Z'))
                 
                 #   Lê linha a linha do arquivo e salva em y.
