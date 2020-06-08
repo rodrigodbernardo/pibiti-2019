@@ -4,9 +4,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoOTA.h>
 #include <Wire.h>
-//#include <ArduinoJson.h>
 #include "private_keys.h"
-//#include "function.h"
 
 #define num_capturas 2500
 #define num_sensor 3
@@ -77,15 +75,18 @@ void loop() {
     for (int tentativa = 0; client.connected() && tentativa < 25 && numberOfSamples == ""; tentativa++) {
       webSocketClient.getData(numberOfSamples);
       webSocketClient.getData(numberOfCaptures);
+      
       Serial.printf("%d tentativas de 25.\n", tentativa + 1);
       delay(1000);
     }
-
+    
     if (numberOfSamples == "")
       return;
 
     int _numberOfSamples = numberOfSamples.toInt();
     int _numberOfCaptures = numberOfCaptures.toInt();
+
+    webSocketClient.sendData("Pronto para capturar");
     
     delay(100);
     //webSocketClient.getData(captureStatus);

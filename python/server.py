@@ -22,42 +22,58 @@ async def clientConnected(websocket, path):
     clear()
 
     print('Conexão bem sucedida!')
+    while(True):
+        try:
+            print('Menu Principal\n')
+            print('1-Captura')
+            print('2-Análise em tempo real')
+            print('3-Reiniciar sensor')
 
-    print('\nMenu Principal\n')
-    print('1-Captura')
-    print('2-Análise em tempo real')
-    print('3-Reiniciar sensor')
-    mainMenu = input('>>> ')                                                                #verificar se é um dos números
+            mainMenu = int(input('\n>>> '))
 
-    try:
-        await asyncio.wait_for(websocket.send(mainMenu), timeout=5.0)
-    except asyncio.TimeoutError:
-        print('O cliente parou de responder. Reiniciando o servidor.')
-        return
+            if not mainMenu in range(1,4):
+                raise ValueError
+        except:
+            clear()
+            print('Número não reconhecido. Tente novamente.\n')
+        else:
+            break
+    
+    await websocket.send(str(mainMenu))
 
     clear()
-    if(mainMenu == '1'):
-        print('1-captura\n')
 
-        captureCode = input('Código da captura: ')                                          #verificar se a pasta existe, criar se nao existir
-        numberOfCaptures = input('Número de capturas: ')                                    #verificar se é número
-        numberOfSamples = input('Número de amostras em cada captura: ')                     #verificar se é número; numero maximo é 2500
+    if(mainMenu == 1):
+        print('1-captura\n')
+        while (True):
+            try:
+                captureCode = input('Código da captura: ')                                              #verificar se a pasta existe, criar se nao existir
+                numberOfCaptures = int(input('Número de capturas(1-99): '))                                    #verificar se é número
+                numberOfSamples = int(input('Número de amostras em cada captura(1-2500): '))                     #verificar se é número; numero maximo é 2500
+            
+                if not (numberOfCaptures in range(1,100) and numberOfSamples in range(1,2501)):
+                    raise Exception
+                
+            except TypeError:
+                print('Entrada incorreta. Tente novamente\n')
+            except Exception:
+                print('Fora do alcance. Tente novamente\n')
+            else:
+                break
+
+        await websocket.send(str(numberOfSamples))
+        await websocket.send(str(numberOfCaptures))
 
         try:
-            await asyncio.wait_for(websocket.send(numberOfSamples), timeout=5.0)
-        except asyncio.TimeoutError:
-            print('O cliente parou de responder. Reiniciando o servidor.')
+            await asyncio.wait_for(websocket.recv(), timeout=5.0)
+        except:
+            print('O cliente parou de responder. Reiniciando o servidor....')
             return
 
-        await websocket.send(numberOfCaptures)
-
-        numberOfCaptures = int(numberOfCaptures)
-        numberOfSamples = int(numberOfSamples)
-
-        print('Iniciando captura. Não desligue o sistema.')
+        #print('Iniciando captura. Não desligue o sistema.')
 
         for iteration in range (numberOfCaptures):
-            print('Captura {} iniciada.'.format(iteration+1))
+            print('Captura {} iniciada. Não desligue o sistema.'.format(iteration+1))
 
             # Aguarda um tempo enquanto o sensor captura os dados.
 
@@ -153,7 +169,7 @@ async def clientConnected(websocket, path):
 
         print('Processo finalizado.')
             
-    elif(mainMenu == '2'):
+    elif(mainMenu == 2):
         print("Preparando análise. Pressione 'ESC' para sair.")
         while True:
             print(await websocket.recv())
@@ -163,7 +179,7 @@ async def clientConnected(websocket, path):
                     print('Análise finalizada. Fazendo reconexão...')
                     break
     
-    elif mainMenu == '3':
+    elif (mainMenu == 3):
         pass
         
 def get_ip():
